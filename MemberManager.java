@@ -1,3 +1,4 @@
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -29,7 +30,7 @@ public class MemberManager {
         } else if (operation.equalsIgnoreCase("GetAll")) {
             getAll(Operation); //done
         } else if (operation.equalsIgnoreCase("getByCourse")) {
-            getByCourse(Operation); //process
+            getByCourse(Operation); //done
         } else if (operation.equalsIgnoreCase("getByContactNumber")) {
             getByContactNumber(Operation); //done
         } else if (operation.equalsIgnoreCase("Remove")) {
@@ -98,6 +99,10 @@ public class MemberManager {
 
         try {
             File f = new File(MEMBER_FILE);
+            if (f.exists() == false) {
+                System.out.println("there is No file here...!");
+                return;
+            }
             RandomAccessFile randomAccessFile = new RandomAccessFile(f, "rw"); //file open here  internal pointer point first byte of file
             String fContactNumber;
             while (randomAccessFile.getFilePointer() < randomAccessFile.length()) //check for start pointer to end
@@ -133,7 +138,104 @@ public class MemberManager {
     }
 
 
-    private static void update(String[] gg) {
+    private static void update(String[] input) { //membermanagment update 8463885741 ankit java 1500
+        if (input.length != 5) {
+            System.out.println("please specify Data its not enough ");
+            System.out.println("Add: [1.ContactNumber 2.Name 3.Course 4.Fee]");
+            return;
+        }
+        String contactNumber = input[1];
+        String name = input[2];
+        String course = input[3];
+        int fee;
+        try {
+            fee = Integer.parseInt(input[4]);
+        } catch (NumberFormatException numberFormatException) {
+            numberFormatException.getMessage();
+            System.out.println("Please Specify Fee as an INTEGER value");
+            return;
+        }
+        //check course are valid or not
+        if (!isValidCourse(course)) {
+            System.out.println("Course are Not valid please specify correct");
+            System.out.println("Add Courses : [C ,C++ ,Java , Python ,React]");
+            return;
+        }
+        String fcontactNumber = "";
+        String fname = "";
+        String fcourse = "";
+        int ffee = 0;
+
+        try {
+            boolean found = false;
+            File file = new File(MEMBER_FILE);
+            if (file.exists() == false) {
+                System.out.println("there is No file here...!");
+                return;
+            }
+            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+            while (randomAccessFile.getFilePointer() < randomAccessFile.length()) {
+                fcontactNumber = randomAccessFile.readLine();
+                if (fcontactNumber.equalsIgnoreCase(contactNumber)) {
+                    found = true;
+                    break;
+                }
+                fname = randomAccessFile.readLine();
+                fcourse = randomAccessFile.readLine();
+                ffee = Integer.parseInt(randomAccessFile.readLine());
+            }
+
+            if (found == false) {
+                randomAccessFile.close();
+                System.out.println("Invalid Contact" + fcontactNumber + "number Please provide Right Number ");
+                return;
+            }
+            System.out.println("UPDATing USER:" + name);
+            try {
+                File tempFile = new File("temp.data");
+                RandomAccessFile tempRandomAccessFile = new RandomAccessFile(tempFile, "rw");
+
+                tempRandomAccessFile.setLength(0);
+                randomAccessFile.seek(0);
+                while (randomAccessFile.getFilePointer() < randomAccessFile.length()) {
+                    fcontactNumber = randomAccessFile.readLine();
+                    fname = randomAccessFile.readLine();
+                    fcourse = randomAccessFile.readLine();
+                    ffee = Integer.parseInt(randomAccessFile.readLine());
+                    if (fcontactNumber.equalsIgnoreCase(contactNumber) == false) {
+                        tempRandomAccessFile.writeBytes(fcontactNumber + "\n");
+                        tempRandomAccessFile.writeBytes(fname + "\n");
+                        tempRandomAccessFile.writeBytes(fcourse + "\n");
+                        tempRandomAccessFile.writeBytes(ffee + "\n");
+                    } else {
+                        tempRandomAccessFile.writeBytes(contactNumber + "\n");
+                        tempRandomAccessFile.writeBytes(name + "\n");
+                        tempRandomAccessFile.writeBytes(course + "\n");
+                        tempRandomAccessFile.writeBytes(fee + "\n");
+                    }
+                }
+
+                randomAccessFile.seek(0);
+                tempRandomAccessFile.seek(0);
+                while (tempRandomAccessFile.getFilePointer() < tempRandomAccessFile.length()) {
+                    randomAccessFile.writeBytes(tempRandomAccessFile.readLine() + "\n");
+                }
+                randomAccessFile.setLength(tempRandomAccessFile.length());
+                tempRandomAccessFile.setLength(0);
+                tempRandomAccessFile.close();
+                randomAccessFile.close();
+                System.out.println("UPDATED!!!!");
+
+            } catch (IOException ioException) {
+
+            }
+
+        } catch (IOException ioException) {
+
+            System.out.println(ioException.getMessage());
+            return;
+        }
+
 
     }
 
@@ -158,19 +260,19 @@ public class MemberManager {
             String name = "";
             String course = "";
             int fee = 0;
-            int totalFeeCollect=0;
-            int memberCount=0;
+            int totalFeeCollect = 0;
+            int memberCount = 0;
             while (randomAccessFile.getFilePointer() < randomAccessFile.length()) {
-                    contactNumber= randomAccessFile.readLine();
-                    name= randomAccessFile.readLine();
-                    course = randomAccessFile.readLine();
-                    fee = Integer.parseInt(randomAccessFile.readLine());
-                System.out.println("contactNumber: "+ contactNumber  + " NAME: "+name+   " COURSE: "+ course+   " FEE: "+ fee);
-                 totalFeeCollect+=fee;
+                contactNumber = randomAccessFile.readLine();
+                name = randomAccessFile.readLine();
+                course = randomAccessFile.readLine();
+                fee = Integer.parseInt(randomAccessFile.readLine());
+                System.out.println("contactNumber: " + contactNumber + " NAME: " + name + " COURSE: " + course + " FEE: " + fee);
+                totalFeeCollect += fee;
                 memberCount++;
             }
-            System.out.println("TOTAL FEES COLLECT :"+ totalFeeCollect);
-            System.out.println("TOTAL MEMBER :"+ memberCount);
+            System.out.println("TOTAL FEES COLLECT :" + totalFeeCollect);
+            System.out.println("TOTAL MEMBER :" + memberCount);
             randomAccessFile.close();
         } catch (IOException ioException) {
             System.out.println(ioException.getMessage());
@@ -192,39 +294,42 @@ public class MemberManager {
         }
         String Course = input[1];
 
-            File f = new File(MEMBER_FILE);
-            if(f.exists()==false)
-            {
-                System.out.println("there is No file here...!");
-                return;
-            }
-            String fcontactNumber="";
-            String fname="";
-            String fcourse="";
-            int fee=0;
-           Boolean found=false;
-            try {
+        File f = new File(MEMBER_FILE);
+        if (f.exists() == false) {
+            System.out.println("there is No file here...!");
+            return;
+        }
+        String fcontactNumber = "";
+        String fname = "";
+        String fcourse = "";
+        int fee = 0;
+        Boolean found = false;
+        int totalFeeCollect = 0;
+        int memberCount = 0;
+        try {
             RandomAccessFile randomAccessFile = new RandomAccessFile(f, "rw");
             while (randomAccessFile.getFilePointer() < randomAccessFile.length()) {
-                        fcontactNumber=randomAccessFile.readLine();
-                        fname = randomAccessFile.readLine();
-                        fcourse =randomAccessFile.readLine();
-                        fee= Integer.parseInt(randomAccessFile.readLine());
-
+                fcontactNumber = randomAccessFile.readLine();
+                fname = randomAccessFile.readLine();
+                fcourse = randomAccessFile.readLine();
+                fee = Integer.parseInt(randomAccessFile.readLine());
+                totalFeeCollect += fee;
+                memberCount++;
                 if (fcourse.equalsIgnoreCase(Course)) {
-                    System.out.println(" contactNumber: "+ fcontactNumber);
-                    System.out.println(" Name: "+ fname);
-                    System.out.println(" Course: "+ fcourse);
-                    System.out.println(" Fee: "+ fee);
+                    System.out.println(" contactNumber: " + fcontactNumber);
+                    System.out.println(" Name: " + fname);
+                    System.out.println(" Course: " + fcourse);
+                    System.out.println(" Fee: " + fee);
                     found = true;
+
                 }
             }
-            if(found==false)
-            {
+            if (found == false) {
                 randomAccessFile.close();
-                System.out.println("Not Registered any student with that Course"+ Course);
+                System.out.println("Not Registered any student with that Course" + Course);
             }
-
+            System.out.println("TOTAL FEES COLLECT :" + totalFeeCollect);
+            System.out.println("TOTAL MEMBER :" + memberCount);
         } catch (IOException ioException) {
             System.out.println(ioException.getMessage());
             return;
@@ -235,36 +340,31 @@ public class MemberManager {
 
 
     private static void getByContactNumber(String[] input) {
-        if(input.length!=2)
-        {
+        if (input.length != 2) {
             System.out.println("(input invalid)!");
             System.out.println("Please type getByContactNUmber with contactNumber (91********) ");
             return;
         }
         String contactNumber = input[1];
         File file = new File(MEMBER_FILE);
-        if(file.exists()==false)
-        {
+        if (file.exists() == false) {
             System.out.println("file not Found!");
             return;
         }
-       String FIleContactNUmber;
+        String FIleContactNUmber;
         String FIlename = "";
         String Filecourse = "";
         int Filefee = 0;
-        Boolean found=false;
-        try
-        {
-            RandomAccessFile randomAccessFile = new RandomAccessFile(file,"rw");
-            while(randomAccessFile.getFilePointer() < randomAccessFile.length())
-            {
+        Boolean found = false;
+        try {
+            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+            while (randomAccessFile.getFilePointer() < randomAccessFile.length()) {
                 FIleContactNUmber = randomAccessFile.readLine();
-                if(FIleContactNUmber.equalsIgnoreCase(contactNumber))
-                {
+                if (FIleContactNUmber.equalsIgnoreCase(contactNumber)) {
                     FIlename = randomAccessFile.readLine();
                     Filecourse = randomAccessFile.readLine();
                     Filefee = Integer.parseInt(randomAccessFile.readLine());
-                    found=true;
+                    found = true;
                     break;
 
                 }
@@ -272,48 +372,110 @@ public class MemberManager {
                 randomAccessFile.readLine();
                 randomAccessFile.readLine();
             }
-            if(found==false)
-            {
+            if (found == false) {
                 randomAccessFile.close();
                 System.out.println("Invalid NUmber Please Provide Right contactNumber!!!");
                 return;
-            }
-            else
-            {
-               System.out.println("contactNumber: "+ contactNumber  + " NAME: "+FIlename+   " COURSE: "+ Filecourse+   " FEE: "+ Filefee);
+            } else {
+                System.out.println("contactNumber: " + contactNumber + " NAME: " + FIlename + " COURSE: " + Filecourse + " FEE: " + Filefee);
             }
 
 
-        }catch (IOException ioException)
-        {
-            System.out.println(ioException.getMessage());
-        }
-
-
-    }
-
-
-    private static void Remove(String[] gg) {
-        if (gg.length != 2) {
-            System.out.println("if you wish to delete, Please type Remove with contactNumber (input invalid)!");
-            System.out.println("Usage: [remove 00000000000]");
-            return;
-        }
-        //check number is valid or not
-        String fNumber = null;
-        try {
-            File f = new File(MEMBER_FILE);
-            RandomAccessFile randomAccessFile = new RandomAccessFile(f, "rw");
-            while (randomAccessFile.getFilePointer() < randomAccessFile.length()) {
-                fNumber = randomAccessFile.readLine();
-                if (fNumber.equalsIgnoreCase(gg[1])) {
-//                 randomAccessFile
-                }
-            }
         } catch (IOException ioException) {
             System.out.println(ioException.getMessage());
         }
+
+
     }
 
+
+    private static void Remove(String[] input) {
+        if (input.length != 2) {
+            System.out.println("please specify Data its not enough ");
+            return;
+        }
+        String contactNumber = input[1];
+
+
+        String fcontactNumber = "";
+        String fname = "";
+        String fcourse = "";
+        int ffee = 0;
+
+        try {
+            boolean found = false;
+            File file = new File(MEMBER_FILE);
+            if (file.exists() == false) {
+                System.out.println("there is No file here...!");
+                return;
+            }
+            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+            while (randomAccessFile.getFilePointer() < randomAccessFile.length()) {
+                fcontactNumber = randomAccessFile.readLine();
+                if (fcontactNumber.equalsIgnoreCase(contactNumber)) {
+                    found = true;
+                    break;
+                }
+                fname = randomAccessFile.readLine();
+                fcourse = randomAccessFile.readLine();
+                ffee = Integer.parseInt(randomAccessFile.readLine());
+            }
+
+            if (found == false) {
+                randomAccessFile.close();
+                System.out.println("Invalid Contact" + fcontactNumber + "number Please provide Right Number ");
+                return;
+            }
+            System.out.println("DELETING USER:" + contactNumber);
+            try {
+                File tempFile = new File("temp.data");
+                RandomAccessFile tempRandomAccessFile = new RandomAccessFile(tempFile, "rw");
+
+                tempRandomAccessFile.setLength(0);
+                randomAccessFile.seek(0);
+                while (randomAccessFile.getFilePointer() < randomAccessFile.length()) {
+                    fcontactNumber = randomAccessFile.readLine();
+                    fname = randomAccessFile.readLine();
+                    fcourse = randomAccessFile.readLine();
+                    ffee = Integer.parseInt(randomAccessFile.readLine());
+                    if (fcontactNumber.equalsIgnoreCase(contactNumber) == false) {
+                        tempRandomAccessFile.writeBytes(fcontactNumber + "\n");
+                        tempRandomAccessFile.writeBytes(fname + "\n");
+                        tempRandomAccessFile.writeBytes(fcourse + "\n");
+                        tempRandomAccessFile.writeBytes(ffee + "\n");
+                    }
+//                    else
+//                    {
+//                        tempRandomAccessFile.writeBytes(contactNumber+"\n");
+//                        tempRandomAccessFile.writeBytes(name+"\n");
+//                        tempRandomAccessFile.writeBytes(course+"\n");
+//                        tempRandomAccessFile.writeBytes(fee+"\n");
+//                    }
+                }
+
+                randomAccessFile.seek(0);
+                tempRandomAccessFile.seek(0);
+                while (tempRandomAccessFile.getFilePointer() < tempRandomAccessFile.length()) {
+                    randomAccessFile.writeBytes(tempRandomAccessFile.readLine() + "\n");
+                }
+                randomAccessFile.setLength(tempRandomAccessFile.length());
+                tempRandomAccessFile.setLength(0);
+                tempRandomAccessFile.close();
+                randomAccessFile.close();
+                System.out.println("UPDATED!!!!");
+
+            } catch (IOException ioException) {
+                System.out.println(ioException.getMessage());
+                return;
+            }
+
+        } catch (IOException ioException) {
+
+            System.out.println(ioException.getMessage());
+            return;
+        }
+
+
+    }
 
 }
